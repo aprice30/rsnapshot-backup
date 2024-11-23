@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "Backup Starting"
 
 # Function to get containers with the label "rsnapshot-backup.enable=true"
 get_backup_containers() {
