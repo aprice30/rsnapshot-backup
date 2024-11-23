@@ -38,11 +38,9 @@ fi
 TEMP_CONF="/tmp/rsnapshot.conf"
 
 # Start creating the rsnapshot configuration with proper tabs
-cat <<EOF > $TEMP_CONF
-config_version\t1.2
-snapshot_root\t/data/backups/
-no_create_root\t1
-EOF
+echo -e "config_version$'\t'1.2" > $TEMP_CONF
+echo -e "snapshot_root$'\t'/data/backups/" >> $TEMP_CONF
+echo -e "no_create_root$'\t'1" >> $TEMP_CONF
 
 # Stop containers before backup
 for container in $CONTAINERS; do
@@ -68,16 +66,15 @@ for container in $CONTAINERS; do
 
     # Add resolved paths to snapshot configuration
     for path in $RESOLVED_PATHS; do
-        echo -e "backup\t$path/\t$container/" >> $TEMP_CONF
+        echo -e "backup$'\t'$path/$'\t'$container/" >> $TEMP_CONF
     done
 done
 
 # Add the default retain policies (with tabs)
-cat <<EOF >> $TEMP_CONF
-retain\tdaily\t7
-retain\tweekly\t4
-retain\tmonthly\t3
-EOF
+echo -e "retain$'\t'daily$'\t'7" >> $TEMP_CONF
+echo -e "retain$'\t'weekly$'\t'4" >> $TEMP_CONF
+echo -e "retain$'\t'monthly$'\t'6" >> $TEMP_CONF
+
 
 # Run rsnapshot
 echo "Starting rsnapshot backup..."
