@@ -87,9 +87,29 @@ echo -e "retain\tmonthly\t6" >> $TEMP_CONF
 
 # Run rsnapshot
 echo "Starting rsnapshot backup..."
+
+echo "Running rsnapshot sync..."
 rm -rf /data/backups/.sync
 rsnapshot -c $TEMP_CONF sync
+
+echo "Running rsnapshot daily..."
 rsnapshot -c $TEMP_CONF daily
+
+# If its Monday=1 then run weekly backup
+DAY_OF_WEEK=$(date +%u)
+if [ "$DAY_OF_WEEK" -eq 1 ]; then
+    echo "Running rsnapshot weekly backup..."
+    rsnapshot -c $TEMP_CONF weekly
+else
+    echo "Skipping weekly backup."
+fi
+
+# If its Day=1 then run monthly backup
+DAY_OF_MONTH=$(date +%d)
+if [ "$DAY_OF_MONTH" -eq 01 ]; then
+    echo "Running rsnapshot monthly backup..."
+    rsnapshot -c $TEMP_CONF monthly
+fi
 
 # Restart containers
 for container in $CONTAINERS; do
