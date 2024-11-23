@@ -1,6 +1,6 @@
-FROM debian:bullseye
+FROM ubuntu:22.04
 
-# Install rsnapshot, cron, and dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     rsnapshot \
     rsync \
