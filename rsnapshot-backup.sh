@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Backup Starting"
+echo "Running Backup for docker containers..."
 
 # Function to get containers with the label "rsnapshot-backup.enable=true"
 get_backup_containers() {
@@ -43,12 +43,6 @@ echo -e "snapshot_root\t/data/backups/" >> $TEMP_CONF
 echo -e "no_create_root\t1" >> $TEMP_CONF
 echo -e "cmd_rsync\t/usr/bin/rsync" >> $TEMP_CONF
 
-# Stop containers before backup
-for container in $CONTAINERS; do
-    echo "Stopping container: $container"
-    docker stop $container
-done
-
 # Include container volumes in rsnapshot conf
 backup_points_added=false
 for container in $CONTAINERS; do
@@ -75,15 +69,20 @@ done
 
 # Check if any backup points were added
 if ! $backup_points_added; then
-    echo "No valid backup points found. Skipping rsnapshot backup."
+    echo "No valid backup points found. Exiting."
     exit 0
 fi
+
+# Stop containers before backup
+for container in $CONTAINERS; do
+    echo "Stopping container: $container"
+    docker stop $container
+done
 
 # Add the default retain policies (with tabs)
 echo -e "retain\tdaily\t7" >> $TEMP_CONF
 echo -e "retain\tweekly\t4" >> $TEMP_CONF
 echo -e "retain\tmonthly\t6" >> $TEMP_CONF
-
 
 # Run rsnapshot
 echo "Starting rsnapshot backup..."
