@@ -41,6 +41,7 @@ TEMP_CONF="/tmp/rsnapshot.conf"
 echo -e "config_version\t1.2" > $TEMP_CONF
 echo -e "snapshot_root\t/data/backups/" >> $TEMP_CONF
 echo -e "no_create_root\t1" >> $TEMP_CONF
+echo -e "cmd_rsync\t/usr/bin/rsync" >> $TEMP_CONF
 
 # Stop containers before backup
 for container in $CONTAINERS; do
