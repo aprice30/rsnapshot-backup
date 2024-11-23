@@ -50,6 +50,7 @@ for container in $CONTAINERS; do
 done
 
 # Include container volumes in rsnapshot conf
+backup_points_added=false
 for container in $CONTAINERS; do
     # Get the backup volumes for this container
     VOLUMES=$(docker inspect --format '{{index .Config.Labels "rsnapshot-backup.volumes"}}' "$container")
@@ -68,8 +69,15 @@ for container in $CONTAINERS; do
     # Add resolved paths to snapshot configuration
     for path in $RESOLVED_PATHS; do
         echo -e "backup\t$path/\t$container/" >> $TEMP_CONF
+        backup_points_added=true
     done
 done
+
+# Check if any backup points were added
+if ! $backup_points_added; then
+    echo "No valid backup points found. Skipping rsnapshot backup."
+    exit 0
+fi
 
 # Add the default retain policies (with tabs)
 echo -e "retain\tdaily\t7" >> $TEMP_CONF
