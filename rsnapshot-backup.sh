@@ -34,12 +34,24 @@ if [ -z "$CONTAINERS" ]; then
     exit 0
 fi
 
-# Stop containers and collect backup paths
-SNAPSHOT_PATHS=""
+# Temporary rsnapshot.conf path
+TEMP_CONF="/tmp/rsnapshot.conf"
+
+# Start creating the rsnapshot configuration with proper tabs
+cat <<EOF > $TEMP_CONF
+config_version\t1.2
+snapshot_root\t/data/backups/
+no_create_root\t1
+EOF
+
+# Stop containers before backup
 for container in $CONTAINERS; do
     echo "Stopping container: $container"
-    docker stop "$container"
+    docker stop $container
+done
 
+# Include container volumes in rsnapshot conf
+for container in $CONTAINERS; do
     # Get the backup volumes for this container
     VOLUMES=$(docker inspect --format '{{index .Config.Labels "rsnapshot-backup.volumes"}}' "$container")
     if [ -z "$VOLUMES" ]; then
@@ -56,25 +68,21 @@ for container in $CONTAINERS; do
 
     # Add resolved paths to snapshot configuration
     for path in $RESOLVED_PATHS; do
-        SNAPSHOT_PATHS="$SNAPSHOT_PATHS backup $path $container/"
+        echo -e "backup\t$path/\t$container/" >> $TEMP_CONF
     done
 done
 
-# Generate a temporary rsnapshot configuration
-TEMP_CONF="/tmp/rsnapshot.conf"
-cat <<EOF > "$TEMP_CONF"
-config_version  1.2
-snapshot_root   /data/backups/
-retain  daily    7
-retain  weekly   4
-retain  monthly  3
-rsync_long_args --numeric-ids --relative --delete --compress
-$SNAPSHOT_PATHS
+# Add the default retain policies (with tabs)
+cat <<EOF >> $TEMP_CONF
+retain\tdaily\t7
+retain\tweekly\t4
+retain\tmonthly\t3
 EOF
 
 # Run rsnapshot
 echo "Starting rsnapshot backup..."
-rsnapshot -c "$TEMP_CONF" daily
+rsnapshot -c $TEMP_CONF sync
+rsnapshot -c $TEMP_CONF daily
 
 # Restart containers
 for container in $CONTAINERS; do
