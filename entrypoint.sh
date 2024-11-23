@@ -4,6 +4,7 @@
 CRON_SCHEDULE="${CRON_SCHEDULE:-0 4 * * *}"
 
 # Ensure the cron service is running
+echo "Cron schedule: $CRON_SCHEDULE"
 service cron start
 
 # Write the cron job for the backup script with the provided schedule
