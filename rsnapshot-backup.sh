@@ -17,7 +17,7 @@ resolve_volume_paths() {
         local volume_path
         volume_path=$(docker inspect --format '{{range .Mounts}}{{if eq .Name "'$volume'"}}{{.Source}}{{end}}{{end}}' "$container")
         if [ -z "$volume_path" ]; then
-            echo "Warning: Could not resolve volume $volume for container $container"
+            echo "Warning: Could not resolve volume $volume for container $container" >&2
             continue
         fi
         resolved_paths="$resolved_paths $volume_path"
@@ -30,7 +30,7 @@ resolve_volume_paths() {
 CONTAINERS=$(get_backup_containers)
 
 if [ -z "$CONTAINERS" ]; then
-    echo "No containers found with label rsnapshot-backup.enable=true. Exiting."
+    echo "No containers found with label rsnapshot-backup.enable=true. Exiting.">&2
     exit 0
 fi
 
@@ -50,14 +50,14 @@ for container in $CONTAINERS; do
     # Get the backup volumes for this container
     VOLUMES=$(docker inspect --format '{{index .Config.Labels "rsnapshot-backup.volumes"}}' "$container")
     if [ -z "$VOLUMES" ]; then
-        echo "No volumes specified for container: $container. Skipping."
+        echo "No volumes specified for container: $container. Skipping.">&2
         continue
     fi
 
     # Resolve the actual paths of the volumes
     RESOLVED_PATHS=$(resolve_volume_paths "$container" "$VOLUMES")
     if [ -z "$RESOLVED_PATHS" ]; then
-        echo "No valid volumes resolved for container: $container. Skipping."
+        echo "No valid volumes resolved for container: $container. Skipping.">&2
         continue
     fi
 
@@ -70,7 +70,7 @@ done
 
 # Check if any backup points were added
 if ! $backup_points_added; then
-    echo "No valid backup points found. Exiting."
+    echo "No valid backup points found. Exiting.">&2
     exit 0
 fi
 
@@ -87,6 +87,7 @@ echo -e "retain\tmonthly\t6" >> $TEMP_CONF
 
 # Run rsnapshot
 echo "Starting rsnapshot backup..."
+rm -rf /data/backups/.sync
 rsnapshot -c $TEMP_CONF sync
 rsnapshot -c $TEMP_CONF daily
 
