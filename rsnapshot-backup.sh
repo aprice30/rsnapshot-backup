@@ -46,6 +46,7 @@ echo -e "sync_first\t1" >> $TEMP_CONF
 echo -e "use_lazy_deletes\t1" >> $TEMP_CONF
 echo -e "verbose\t3" >> $TEMP_CONF
 echo -e "loglevel\t4" >> $TEMP_CONF
+echo -e "rsync_long_args --delete --numeric-ids --relative --delete-excluded --exclude=.sync" >> $TEMP_CONF
 
 # Include container volumes in rsnapshot conf
 backup_points_added=false
