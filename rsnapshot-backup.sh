@@ -109,6 +109,8 @@ DAY_OF_MONTH=$(date +%d)
 if [ "$DAY_OF_MONTH" -eq 01 ]; then
     echo "Running rsnapshot monthly backup..."
     rsnapshot -c $TEMP_CONF monthly
+else
+    echo "Skipping monthly backup."
 fi
 
 # Restart containers
