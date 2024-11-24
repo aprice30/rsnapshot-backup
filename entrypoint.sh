@@ -21,7 +21,7 @@ touch /var/log/backup.log
 
 if $BACKUP_ON_START; then
     echo "Running backup on startup"
-    ./rsnapshot-backup.sh
+    ./usr/local/bin/rsnapshot-backup.sh
 fi
 
 # Keep the container running by tailing the log
