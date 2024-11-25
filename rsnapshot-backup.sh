@@ -43,6 +43,7 @@ echo -e "snapshot_root\t/data/backups/" >> $TEMP_CONF
 echo -e "no_create_root\t1" >> $TEMP_CONF
 echo -e "cmd_rsync\t/usr/bin/rsync" >> $TEMP_CONF
 echo -e "sync_first\t1" >> $TEMP_CONF
+echo -e "rsync_long_args\t--delete\t--numeric-ids\t--relative\t--delete-excluded\t--exclude=.sync\t--inplace\t--partial" >> $TEMP_CONF
 
 # Include container volumes in rsnapshot conf
 backup_points_added=false
