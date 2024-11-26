@@ -11,9 +11,13 @@ service cron start
 
 # Write the cron job for the backup script with the provided schedule
 CRON_FILE="/etc/cron.d/backup-cron"
-echo "$CRON_SCHEDULE /usr/local/bin/rsnapshot-backup.sh >> /var/log/backup.log 2>&1" > $CRON_FILE
+echo "$CRON_SCHEDULE /usr/local/bin/rsnapshot-backup.sh backup >> /var/log/backup.log 2>&1" > $CRON_FILE
 chmod 0644 $CRON_FILE
 crontab $CRON_FILE
+
+# Run only the configuration rebuild on container startup
+echo "Rebuilding rsnapshot configuration on container startup..."
+/usr/local/bin/rsnapshot-backup.sh rebuild >> /var/log/backup.log 2>&1
 
 # Ensure the log file exists
 touch /var/log/backup.log
