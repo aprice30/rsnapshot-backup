@@ -12,12 +12,18 @@ resolve_volume_paths() {
     local volume_names=$2
     local resolved_paths=""
 
+    # If no volumes are specified, fetch all Docker volumes for the container
+    if [ -z "$volume_names" ]; then
+        volume_names=$(docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}{{" "}}{{end}}{{end}}' "$container")
+    fi
+
+    # Resolve the volume mount paths
     for volume in $(echo "$volume_names" | tr ',' ' '); do
-        # Resolve the volume mount point using docker inspect
         local volume_path
-        volume_path=$(docker inspect --format '{{range .Mounts}}{{if eq .Name "'$volume'"}}{{.Source}}{{end}}{{end}}' "$container")
+        # Ensure the volume is of type "volume" (not bind-mounted paths)
+        volume_path=$(docker inspect --format '{{range .Mounts}}{{if and (eq .Name "'$volume'") (eq .Type "volume")}}{{.Source}}{{end}}{{end}}' "$container")
         if [ -z "$volume_path" ]; then
-            echo "Warning: Could not resolve volume $volume for container $container" >&2
+            echo "Warning: Could not resolve Docker volume $volume for container $container" >&2
             continue
         fi
         resolved_paths="$resolved_paths $volume_path"
