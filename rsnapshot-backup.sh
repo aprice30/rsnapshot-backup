@@ -16,8 +16,6 @@ resolve_volume_paths() {
         volume_names=$(docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}{{" "}}{{end}}{{end}}' "$container")
     fi
 
-    echo "Resolving volumes from '$volume_names'"
-
     # Resolve the volume mount paths
     for volume in $(echo "$volume_names" | tr ',' ' '); do
         local volume_path
@@ -58,11 +56,6 @@ rebuild_rsnapshot_conf() {
 
     for container in $CONTAINERS; do
         VOLUMES=$(docker inspect --format '{{index .Config.Labels "rsnapshot-backup.volumes"}}' "$container")
-        if [ -z "$VOLUMES" ]; then
-            echo "No volumes specified for container: $container. Skipping." >&2
-            continue
-        fi
-
         RESOLVED_PATHS=$(resolve_volume_paths "$container" "$VOLUMES")
         if [ -z "$RESOLVED_PATHS" ]; then
             echo "No valid volumes resolved for container: $container. Skipping." >&2
