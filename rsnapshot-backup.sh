@@ -16,6 +16,8 @@ resolve_volume_paths() {
         volume_names=$(docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}{{" "}}{{end}}{{end}}' "$container")
     fi
 
+    echo "Resolving volumes from '$volume_names'"
+
     # Resolve the volume mount paths
     for volume in $(echo "$volume_names" | tr ',' ' '); do
         local volume_path
