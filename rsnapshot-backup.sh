@@ -68,7 +68,11 @@ rebuild_rsnapshot_conf() {
         fi
 
         for path in $RESOLVED_PATHS; do
-            echo -e "backup\t$path/\t$container/" >> $TEMP_CONF
+            # Extract the volume name by removing the '_data' suffix
+            volume_name=$(basename "$(dirname "$path")")
+            # Append the backup configuration with the volume name as the subfolder
+            echo -e "backup\t$path/\t$container/$volume_name/" >> $TEMP_CONF
+
             backup_points_added=true
         done
     done
