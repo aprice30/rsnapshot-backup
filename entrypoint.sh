@@ -17,7 +17,7 @@ crontab $CRON_FILE
 
 # Run only the configuration rebuild on container startup
 echo "Rebuilding rsnapshot configuration on container startup..."
-/usr/local/bin/rsnapshot-backup.sh rebuild >> /var/log/backup.log 2>&1
+/usr/local/bin/rsnapshot-backup.sh rebuild
 
 # Ensure the log file exists
 touch /var/log/backup.log

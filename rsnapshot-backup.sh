@@ -13,7 +13,8 @@ resolve_volume_paths() {
 
     # If no volumes are specified, fetch all Docker volumes for the container
     if [ -z "$volume_names" ]; then
-        volume_names=$(docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}{{" "}}{{end}}{{end}}' "$container")
+        echo "No rsnapapshot-backup.volume label found for '$container', will discover..." >&2
+        volume_names=$(docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}{{" "}}{{end}}{{end}}' "$container")  
     fi
 
     # Resolve the volume mount paths
@@ -33,7 +34,6 @@ resolve_volume_paths() {
 
 # Function to rebuild the rsnapshot.conf file
 rebuild_rsnapshot_conf() {
-    echo "Rebuilding rsnapshot configuration..."
     TEMP_CONF="/tmp/rsnapshot.conf"
 
     # Start creating the rsnapshot configuration with proper tabs
@@ -54,6 +54,7 @@ rebuild_rsnapshot_conf() {
     fi
 
     for container in $CONTAINERS; do
+        echo "=== $container"
         VOLUMES=$(docker inspect --format '{{index .Config.Labels "rsnapshot-backup.volumes"}}' "$container")
         RESOLVED_PATHS=$(resolve_volume_paths "$container" "$VOLUMES")
         if [ -z "$RESOLVED_PATHS" ]; then
@@ -129,9 +130,8 @@ run_rsnapshot() {
     fi
 }
 
-CONTAINERS=$(get_backup_containers)
-
 # Main execution based on command-line argument
+CONTAINERS=$(get_backup_containers)
 case "$1" in
     rebuild)
         rebuild_rsnapshot_conf
