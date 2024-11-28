@@ -47,7 +47,6 @@ rebuild_rsnapshot_conf() {
 
     # Include container volumes in rsnapshot conf
     backup_points_added=false
-    CONTAINERS=$(get_backup_containers)
 
     if [ -z "$CONTAINERS" ]; then
         echo "No containers found with label rsnapshot-backup.enable=true. Exiting." >&2
@@ -86,7 +85,6 @@ rebuild_rsnapshot_conf() {
 
 # Stop containers before backup
 stop_containers() {
-    CONTAINERS=$(get_backup_containers)
     for container in $CONTAINERS; do
         echo "Stopping container: $container"
         docker stop "$container"
@@ -95,7 +93,6 @@ stop_containers() {
 
 # Restart containers after backup
 start_containers() {
-    CONTAINERS=$(get_backup_containers)
     for container in $CONTAINERS; do
         echo "Starting container: $container"
         docker start "$container"
@@ -131,6 +128,8 @@ run_rsnapshot() {
         echo "Skipping monthly backup."
     fi
 }
+
+CONTAINERS=$(get_backup_containers)
 
 # Main execution based on command-line argument
 case "$1" in
