@@ -1,0 +1,68 @@
+name: Delete all package versions
+
+on:
+  workflow_dispatch:  # Only manual trigger from UI
+
+jobs:
+  delete-all:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.event.repository.name }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Delete all package versions
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          PACKAGE_ESCAPED="${IMAGE_NAME//\//%2F}"  # encode slashes
+
+          fetch_versions() {
+            curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github+json" \
+                 "$1"
+          }
+
+          get_all_versions() {
+            local base_url="$1"
+            local page=1
+            local all_json="[]"
+            while true; do
+              page_json=$(fetch_versions "${base_url}?per_page=100&page=$page")
+              if ! echo "$page_json" | jq -e 'type == "array"' >/dev/null; then
+                echo "$page_json"
+                exit 1
+              fi
+              count=$(echo "$page_json" | jq length)
+              if [ "$count" -eq 0 ]; then break; fi
+              all_json=$(jq -s 'add' <(echo "$all_json") <(echo "$page_json"))
+              ((page++))
+            done
+            echo "$all_json"
+          }
+
+          # Try user endpoint first, fallback to org
+          versions_json=$(get_all_versions "https://api.github.com/users/$OWNER/packages/container/$PACKAGE_ESCAPED/versions")
+          if [ "$(echo "$versions_json" | jq length)" -eq 0 ]; then
+            versions_json=$(get_all_versions "https://api.github.com/orgs/$OWNER/packages/container/$PACKAGE_ESCAPED/versions")
+          fi
+
+          mapfile -t versions < <(echo "$versions_json" | jq -c '.[] | {id: .id}')
+
+          for v in "${versions[@]}"; do
+            id=$(echo "$v" | jq -r '.id')
+            echo "🗑 Deleting version id $id"
+            curl -s -X DELETE \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/users/$OWNER/packages/container/$PACKAGE_ESCAPED/versions/$id" \
+              || curl -s -X DELETE \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/orgs/$OWNER/packages/container/$PACKAGE_ESCAPED/versions/$id"
+          done
